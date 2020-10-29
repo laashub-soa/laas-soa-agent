@@ -216,3 +216,74 @@ ENTRYPOINT ["./startup.sh"]
 laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务器
 
 启动时指定参数连接到服务器, 接收服务器的指令和参数进行构建
+
+
+
+
+
+
+
+在服务端设置哪些ip的agent是可以消费哪些事情的, 可以在服务端进行维护agent功能类型表, 也可以由agent启动时指定自己的动作类型, 实现agent订阅动作类型
+
+动作+参数
+
+每隔一秒钟请求/comsume_action消费动作, 同时标记该动作id的状态为comsumed(已消费), 返回数据如下
+
+```
+[
+	{
+		"action": "build",
+		"action_id": "xxx",
+		"action_data_id": "xxx"
+	}
+]
+```
+
+当消费到动作时, 请求/comsume_action_data消费数据, 返回数据如下
+
+```
+{
+    "action": "build",
+    "action_id": "xxx",
+    "action_data_id": "xxx",
+    "project_type": "java",
+    "type": "branch", 
+    "build_config_file_id": "xxx",
+    "build_config_file_version_list": [{"xxx":"xxx"}]
+}
+```
+
+当对比本地build_config_file_version_list和服务器上的版本不一样时, 携带不一样文件的名称作为参数请求服务器获取数据
+
+```
+[
+	"data_id": "xxx",
+	"param_list": [
+		{"build_config_file_version_list": "xxx"}
+	]
+]
+```
+
+响应数据为
+
+```
+[
+	"data_id": "xxx",
+	"data_list":[
+		"xxx": ""
+	]
+]
+```
+
+请求/log_data记录日志
+
+
+
+可以使用websocket
+
+也可以使用http进
+
+
+
+
+
