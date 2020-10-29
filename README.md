@@ -6,11 +6,13 @@ builder(构建器)
 
 基于docker进行资源隔离和构建器管理
 
-运行依赖于服务器, 使用时需要配置服务器连接信息ip, 以及服务器的
+运行依赖于服务器
 
-通过ssh连接到服务器, 发送ssh指令去触发构建器运行
+启动时指定服务端的连接信息(基于websocket?), 连接到服务器
 
-为了提升性能和稳定性, agent中使用硬编码方式开发
+服务端通过ssh连接到构建机器进行初始化构建器
+
+
 
 
 
@@ -52,6 +54,10 @@ source中存源码, build中存构建脚本文件, 使用version文件记录构�
 ​	
 
 服务端需要配置:
+
+​	构建机器信息:
+
+​		服务器连接信息: ip、port、username、password
 
 ​	镜像仓库信息:
 
@@ -205,3 +211,8 @@ ENV SW_AGENT_NAME ${IMAGE_PROJECT_TAG}
 ENTRYPOINT ["./startup.sh"]
 ```
 
+# 开发
+
+laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务器
+
+启动时指定参数连接到服务器, 接收服务器的指令和参数进行构建
