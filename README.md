@@ -227,30 +227,24 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 动作+参数
 
-每隔一秒钟请求/comsume_action消费动作, 同时标记该动作id的状态为comsumed(已消费), 返回数据如下
+每隔0.5秒钟请求/comsume_action消费动作, 同时标记该动作id的状态为comsumed(已消费), 返回数据如下
 
 ```
 [
 	{
 		"action": "build",
 		"action_id": "xxx",
-		"action_data_id": "xxx"
+		"action_data": [
+			"action": "build",
+            "action_id": "xxx",
+            "action_data_id": "xxx",
+            "project_type": "java",
+            "type": "branch", 
+            "build_config_file_id": "xxx",
+            "build_config_file_version_list": [{"xxx":"xxx"}]
+		]
 	}
 ]
-```
-
-当消费到动作时, 请求/comsume_action_data消费数据, 返回数据如下
-
-```
-{
-    "action": "build",
-    "action_id": "xxx",
-    "action_data_id": "xxx",
-    "project_type": "java",
-    "type": "branch", 
-    "build_config_file_id": "xxx",
-    "build_config_file_version_list": [{"xxx":"xxx"}]
-}
 ```
 
 当对比本地build_config_file_version_list和服务器上的版本不一样时, 携带不一样文件的名称作为参数请求服务器获取数据
