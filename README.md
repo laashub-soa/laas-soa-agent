@@ -2,13 +2,15 @@
 
 
 
-builder(构建器)
+# 业务场景
+
+构建代码
 
 基于docker进行资源隔离和构建器管理
 
 运行依赖于服务器
 
-启动时指定服务端的连接信息(基于websocket?), 连接到服务器
+启动时指定服务端的连接信息, 连接到服务器
 
 服务端通过ssh连接到构建机器进行初始化构建器
 
@@ -117,7 +119,7 @@ cache中保存该仓库的构建缓存数据, source中存源码, build中存构
 
 当网络连接状态良好时使用websocket, 当网络连接状态不好时使用http
 
-# 案例
+# 之前类似的做法
 
 之前基于gitlab-runner做ci的案例:
 
@@ -225,13 +227,13 @@ ENTRYPOINT ["./startup.sh"]
 
 ## 服务端
 
-在服务端设置哪些ip的agent是可以消费哪些动作的, 可以在服务端进行维护agent功能类型表
+在服务端设置哪些ip的agent是可以消费哪些业务的, 可以在服务端进行维护agent功能类型表
 
-通过配置的agent列表以及他的ssh连接信息, 连接到服务器去执行初始化agent指令, 在启动时设置启动参数: 服务端地址、服务端认证信息、订阅的action列表
+通过配置的agent列表以及他的ssh连接信息, 连接到服务器去执行初始化agent指令, 在启动时设置启动参数: 服务端地址、服务端认证信息、订阅的业务列表
 
-接收http请求, 在动作和数据队列中对应关联生成一条数据
+接收http请求, 在业务和数据队列中对应关联生成一条数据
 
-当客户端消费一条动作时, 标记该动作id的状态为comsumed(已消费)
+当客户端消费一条动作时, 标记该业务id的状态为comsumed(已消费)
 
 ## agent
 
@@ -239,24 +241,31 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 启动时指定参数连接到服务器, 接收服务器的指令和参数进行构建
 
-每隔05S请求服务端, 消费自定订阅的动作的动作队列中的数据(适用于这里的场景), 然后按照上面的接口流程去走
+每隔0.5S请求服务端, 消费自定订阅的动作的动作队列中的数据(适用于这里的场景), 然后按照上面的接口流程去走
 
-可以使用websocket, 也可以使用http
+使用http协议进行通信, 使用keepalive参数保持长连接
 
 
 
-### 消费动作和同步数据的过程
+### 查询业务和业务数据的过程
 
-#### 查询动作
+#### 查询业务
 
-请求/consume_action消费动作, 返回数据如下
+请求/select_consume_business 消费业务及其直线数据, 返回数据如下
 
 ```
-[
-	{
-		"action_id": "xxx",
-		"action_type": "build",
-		"action_data": [
+[{
+	"business_id": "1",
+	"business_name": "build_source",
+	"command": "",
+	"business_data": [
+			{
+				"":[
+				{
+				
+				}
+				],
+			}
             "cache": {
             	"docker-registry": {"versin": "", "id": "xxx"},
             	"git-repo": {"version": "", "id": "xxx"},
@@ -322,9 +331,37 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 ### agent的执行命令
 
+从用户层看来是以数据为主视角, 数据驱动指令; 从执行层看来是以指令为主视角, 指令驱动数据
+
+数据就是单表的数据模型的生成, 表名、表描述、字段、字段类型、字段描述、引用表-字段名称, 使用的地方就是单表的增删改查, 数据插入时可以作为默认值, 数据使用可以进行限制以及设置默认值
+
 当同步完数据之后就可以执行agent的启动命令
 
 暂时模拟
+
+data_require.json
+
+```
+{
+	"data1": [{
+		"": ""
+	}]
+}
+```
+
+data_change.json
+
+```
+{
+	"insert": [{"data1": [{"col1": "value1"}]}],
+	"update": [{"data_name": "data1", "data": {"col1": "value1"}, "data_condition": {"col1": "value1"}}],
+	"delete": [[{"data_name": "data1", "data_condition": {"col1": "value1"}}],
+}
+```
+
+状态、日志会增量收集同步到服务器上(filebeat)
+
+
 
 ```
 start_action.sh
