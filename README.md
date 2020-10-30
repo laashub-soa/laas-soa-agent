@@ -65,27 +65,25 @@ cache中保存该仓库的构建缓存数据, source中存源码, build中存构
 
 ​		连接信息: ip、port、username、password
 
-​	父镜像
-
-​			编译环境
-
-​			compile_to_execute.sh
-
-​			package_to_docker.sh
-
 ​	构建信息:
 
-​			编译环境
+​			编译镜像名称
+
+​			镜像仓库地址
 
 ​			compile_to_execute.sh
 
 ​			package_to_docker.sh
+
+​			Dockerfile
 
 ​	git服务器信息:
 
 ​			连接信息: ip、port、username、password, 该连接账号的权限只需要只读即可
 
 ​			是否默认
+
+​	
 
 ​	配置项目信息:
 
@@ -99,13 +97,25 @@ cache中保存该仓库的构建缓存数据, source中存源码, build中存构
 
 ​		构建信息: 选择一个构建信息, 可进行预览
 
+​	镜像构建:
 
+​		镜像仓库地址
+
+​		编译镜像名称
+
+​		compile_to_execute.sh
+
+​		package_to_docker.sh
+
+​		Dockerfile
 
 
 
 和服务端的维持关系:
 
-使用websocket方式
+使用websocket方式 或者 http
+
+当网络连接状态良好时使用websocket, 当网络连接状态不好时使用http
 
 # 案例
 
@@ -320,17 +330,28 @@ start_action.sh
 # 构建
 docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/compile_to_execute.sh
 
-build_source.sh:
+compile_to_execute.sh:
 mvn clean package -DskipTests
 
 
 # 打包
 docker run -it --name action_build_1 -v /data:实际目录 docker  git配置名称/仓库目录/package_to_docker.sh
 
+package_to_docker.sh:
 cat /root/.m2/dockerregistry-auth |  docker login ${DOCKER_REGISTRY_URL} --username ${DOCKER_REGISTRY_USERNAME} --password-stdin
 docker build --build-arg IMAGE_PROJECT_TAG=${IMAGE_PROJECT_TAG} -t ${IMAGE_ID}  .
 docker push ${IMAGE_ID}
 docker rmi ${IMAGE_ID}
+
+Dockerfile:
+FROM registry-vpc.cn-shenzhen.aliyuncs.com/xxx/base_image-master:2790_201911271640
+ADD target/*.jar app.jar
+ADD startup.sh startup.sh
+RUN bash -c 'touch app.jar'
+RUN chmod 777 startup.sh
+ARG IMAGE_PROJECT_TAG
+ENV SW_AGENT_NAME ${IMAGE_PROJECT_TAG}
+ENTRYPOINT ["./startup.sh"]
 
 # 修改这一次构建打包目标的镜像id
 ```
