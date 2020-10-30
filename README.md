@@ -318,9 +318,9 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 start_action.sh
 
 # 构建
-docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/startup.sh
+docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/build_source.sh
 
-start.sh:
+build_source.sh:
 mvn clean package -DskipTests
 
 
