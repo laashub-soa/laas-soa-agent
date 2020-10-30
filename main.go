@@ -9,12 +9,23 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
+
+func retryConnect(err error) {
+	log.Println("error occurred:", err)
+	for i := 3; i > 0; i-- {
+		log.Printf("retry to connect to server in %s second after", strconv.Itoa(i))
+		time.Sleep(time.Duration(1) * time.Second) // 当连接不上服务端时每隔3秒钟重新连接一次服务端
+	}
+
+	main()
+}
 
 func main() {
 	flag.Parse()
@@ -28,6 +39,7 @@ func main() {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
+		retryConnect(err)
 		log.Fatal("dial:", err)
 	}
 	defer c.Close()
@@ -39,8 +51,8 @@ func main() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
+				retryConnect(nil)
 				log.Println("read:", err)
-				return
 			}
 			log.Printf("recv: %s", message)
 		}
@@ -52,6 +64,7 @@ func main() {
 	for {
 		select {
 		case <-done:
+			log.Println("done")
 			return
 		case <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(""))
