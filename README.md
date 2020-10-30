@@ -69,17 +69,17 @@ cache中保存该仓库的构建缓存数据, source中存源码, build中存构
 
 ​			编译环境
 
-​			编译脚本
+​			compile_to_execute.sh
 
-​			打包镜像脚本
+​			package_to_docker.sh
 
 ​	构建信息:
 
 ​			编译环境
 
-​			编译脚本
+​			compile_to_execute.sh
 
-​			打包镜像脚本
+​			package_to_docker.sh
 
 ​	git服务器信息:
 
@@ -318,14 +318,14 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 start_action.sh
 
 # 构建
-docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/build_source.sh
+docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/compile_to_execute.sh
 
 build_source.sh:
 mvn clean package -DskipTests
 
 
 # 打包
-docker run -it --name action_build_1 -v /data:实际目录 docker  build-docker.sh
+docker run -it --name action_build_1 -v /data:实际目录 docker  git配置名称/仓库目录/package_to_docker.sh
 
 cat /root/.m2/dockerregistry-auth |  docker login ${DOCKER_REGISTRY_URL} --username ${DOCKER_REGISTRY_USERNAME} --password-stdin
 docker build --build-arg IMAGE_PROJECT_TAG=${IMAGE_PROJECT_TAG} -t ${IMAGE_ID}  .
