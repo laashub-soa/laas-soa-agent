@@ -247,9 +247,9 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 ### 消费动作和同步数据的过程
 
-#### 消费动作
+#### 查询动作
 
-请求/comsume_action消费动作, 返回数据如下
+请求/consume_action消费动作, 返回数据如下
 
 ```
 [
@@ -277,7 +277,9 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 同步源码到本地目录
 
-#### 请求同步差异数据
+得到差异数据列表
+
+#### 查询数据
 
 当对比本地build_config_file_version_list和服务器上的版本不一样时, 携带不一样文件的名称作为参数请求服务器获取数据
 
@@ -312,7 +314,7 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 
 
-#### 记录日志
+#### 新增日志
 
 请求/log_data记录日志
 
@@ -356,3 +358,8 @@ ENTRYPOINT ["./startup.sh"]
 # 修改这一次构建打包目标的镜像id
 ```
 
+### 一些问题
+
+多台agent应该平均分配动作
+
+服务端关闭时客户端等待连接
