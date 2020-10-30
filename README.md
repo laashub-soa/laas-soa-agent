@@ -21,25 +21,25 @@ builder(构建器)
 根据项目目录创建并切换到运行目录, 目录结构如下:
 
 ```
-配置根目录
+该action的根目录
 	dependency_lib
 	git配置名称
 		仓库目录
+			startup.sh
+			cache	
 			branch
 				master
 					source
                     build
-                    target
 				xxx
 			tag
 				xxx
 					source
                     build
-                    target
 
 ```
 
-source中存源码, build中存构建脚本文件, 使用version文件记录构建脚本文件的版本, 当版本一致时则不拉取最新构建脚本, 反之则拉取最新构建脚本
+cache中保存该仓库的构建缓存数据, source中存源码, build中存构建脚本文件, 使用version文件记录构建脚本文件的版本, 当版本一致时则不拉取最新构建脚本, 反之则拉取最新构建脚本
 
 拉取源码
 
@@ -213,48 +213,71 @@ ENTRYPOINT ["./startup.sh"]
 
 # 开发
 
+## 服务端
+
+在服务端设置哪些ip的agent是可以消费哪些动作的, 可以在服务端进行维护agent功能类型表
+
+通过配置的agent列表以及他的ssh连接信息, 连接到服务器去执行初始化agent指令, 在启动时设置启动参数: 服务端地址、服务端认证信息、订阅的action列表
+
+接收http请求, 在动作和数据队列中对应关联生成一条数据
+
+当客户端消费一条动作时, 标记该动作id的状态为comsumed(已消费)
+
+## agent
+
 laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务器
 
 启动时指定参数连接到服务器, 接收服务器的指令和参数进行构建
 
+每隔05S请求服务端, 消费自定订阅的动作的动作队列中的数据(适用于这里的场景), 然后按照上面的接口流程去走
+
+可以使用websocket, 也可以使用http
 
 
 
+### 消费动作和同步数据的过程
 
+#### 消费动作
 
-
-在服务端设置哪些ip的agent是可以消费哪些事情的, 可以在服务端进行维护agent功能类型表, 也可以由agent启动时指定自己的动作类型, 实现agent订阅动作类型
-
-动作+参数
-
-每隔0.5秒钟请求/comsume_action消费动作, 同时标记该动作id的状态为comsumed(已消费), 返回数据如下
+请求/comsume_action消费动作, 返回数据如下
 
 ```
 [
 	{
-		"action": "build",
 		"action_id": "xxx",
+		"action_type": "build",
 		"action_data": [
-			"action": "build",
-            "action_id": "xxx",
-            "action_data_id": "xxx",
-            "project_type": "java",
-            "type": "branch", 
-            "build_config_file_id": "xxx",
-            "build_config_file_version_list": [{"xxx":"xxx"}]
+            "cache": {
+            	"docker-registry": {"versin": "", "id": "xxx"},
+            	"git-repo": {"version": "", "id": "xxx"},
+            	"build-script": [{"path": "", "versin": "", "id": "xxx"}]
+            },
+            "non-cached": {
+            	"git-repo-url": "xxx",
+            	"docker-registry-url": "xxx",
+            	"type": "branch", 
+            	"type_value": "master",
+            	"project_type": "java",
+            },        
 		]
+		"startup.sh": "",
 	}
 ]
 ```
+
+同步源码到本地目录
+
+#### 请求同步差异数据
 
 当对比本地build_config_file_version_list和服务器上的版本不一样时, 携带不一样文件的名称作为参数请求服务器获取数据
 
 ```
 [
-	"data_id": "xxx",
-	"param_list": [
-		{"build_config_file_version_list": "xxx"}
-	]
+	{
+			"data_id": "xxx",
+			"data_name": "xxx",
+			"param_list": [{"path": "xxx"}]
+	}
 ]
 ```
 
@@ -262,22 +285,53 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 ```
 [
-	"data_id": "xxx",
-	"data_list":[
-		"xxx": ""
-	]
+	{
+		"data_id": "xxx",
+		"data_name": "xxx",
+        "build-script":[
+            {
+            	"path": "xxx",
+            	"data": "xxx"
+            }
+        ]
+	}
 ]
 ```
+
+存储字符串/文件都是要到文件中
+
+
+
+#### 记录日志
 
 请求/log_data记录日志
 
 
 
-可以使用websocket
+### agent的执行命令
 
-也可以使用http进
+当同步完数据之后就可以执行agent的启动命令
+
+暂时模拟
+
+```
+start_action.sh
+
+# 构建
+docker run -it --name action_build_1 -v /data:实际目录 maven:3-alpine git配置名称/仓库目录/startup.sh
+
+start.sh:
+mvn clean package -DskipTests
 
 
+# 打包
+docker run -it --name action_build_1 -v /data:实际目录 docker  build-docker.sh
 
+cat /root/.m2/dockerregistry-auth |  docker login ${DOCKER_REGISTRY_URL} --username ${DOCKER_REGISTRY_USERNAME} --password-stdin
+docker build --build-arg IMAGE_PROJECT_TAG=${IMAGE_PROJECT_TAG} -t ${IMAGE_ID}  .
+docker push ${IMAGE_ID}
+docker rmi ${IMAGE_ID}
 
+# 修改这一次构建打包目标的镜像id
+```
 
