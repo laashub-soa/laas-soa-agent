@@ -243,7 +243,7 @@ laas-soa-operate-builder项目作为agent构建器二进制文件部署在服务
 
 每隔0.5S请求服务端, 消费自定订阅的动作的动作队列中的数据(适用于这里的场景), 然后按照上面的接口流程去走
 
-使用http协议进行通信, 使用keepalive参数保持长连接
+使用http协议进行通信, 使用keepalive参数保持长连接(requests库默认为长连接)
 
 
 
@@ -400,3 +400,5 @@ ENTRYPOINT ["./startup.sh"]
 多台agent应该平均分配动作
 
 服务端关闭时客户端等待连接
+
+每个任务使用单独的进程
