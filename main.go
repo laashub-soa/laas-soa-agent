@@ -68,7 +68,7 @@ func syncAgentConfig() {
 
 // 消费业务
 func consumeBusiness() {
-	log.Println("consumeBusiness")
+	log.Println("consuming business")
 	defer func() {
 		time.Sleep(time.Second * 1)
 		recover()
